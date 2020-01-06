@@ -19,9 +19,10 @@ def register():
     req_dict = request.get_json()
 
     mobile = req_dict.get("mobile")
-    captcha = req_dict.get("captcha")
+    captcha = req_dict.get("img_code")
     password = req_dict.get("password")
     password2 = req_dict.get("password2")
+    img_id = req_dict.get("img_id")
 
     # 校验参数
     if not all([mobile, captcha, password, password2]):
@@ -34,12 +35,24 @@ def register():
 
     if password != password2:
         return jsonify(errno=RET.PARAMERR, errmsg="两次密码不一致")
-    
     try:
-        redis_store.get("%s"%captcha)
-    except expression as identifier:
-        pass
-'''
+        img_id = redis_store.get("image_code_%s"%img_id)
+    except Exception as identifier:
+        current_app.logger.error(identifier)
+        return jsonify(errno=RET.DBERR, errmsg="读取图片验证码异常")
+    
+    if img_id is None:
+        return jsonify(errno=RET.NODATA, errmsg="图片验证码失效")
+    # 删除redis中的图片验证码，防止重复使用校验
+    try:
+        redis_store.delete("sms_code_%s" % mobile)
+    except Exception as e:
+        current_app.logger.error(e)
+    # print(img_id.decode("utf-8").lower())
+    if img_id.decode("utf-8").lower() != captcha:
+        return  jsonify(errno=RET.DATAERR, errmsg="图片验证码错误")
+    
+    '''
     # 从redis中取出短信验证码
     try:
         real_sms_code = redis_store.get("sms_code_%s" % mobile)
@@ -60,7 +73,7 @@ def register():
     # 判断用户填写短信验证码的正确性
     if real_sms_code != sms_code:
         return jsonify(errno=RET.DATAERR, errmsg="短信验证码错误")
-'''
+    '''
     # 判断用户的手机号是否注册过
     # try:
     #     user = User.query.filter_by(mobile=mobile).first()
@@ -81,6 +94,8 @@ def register():
     # 用户登录  password ="123456"  "abc"  sha256      sha1   hxosufodsofdihsofho
 
     # 保存用户的注册数据到数据库中
+    
+    
     user = User(name=mobile, mobile=mobile)
     # user.generate_password_hash(password)
 

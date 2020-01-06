@@ -104,7 +104,7 @@ $(document).ready(function() {
         e.preventDefault();
 
         var mobile = $("#mobile").val();
-        var phoneCode = $("#phonecode").val();
+        var imagecode = $("#imagecode").val();
         var passwd = $("#password").val();
         var passwd2 = $("#password2").val();
         if (!mobile) {
@@ -112,8 +112,8 @@ $(document).ready(function() {
             $("#mobile-err").show();
             return;
         } 
-        if (!phoneCode) {
-            $("#phone-code-err span").html("请填写短信验证码！");
+        if (!imagecode) {
+            $("#phone-code-err span").html("请填写图片验证码！");
             $("#phone-code-err").show();
             return;
         }
@@ -131,9 +131,10 @@ $(document).ready(function() {
         // 调用ajax向后端发送注册请求
         var req_data = {
             mobile: mobile,
-            sms_code: phoneCode,
+            img_code: imagecode,
             password: passwd,
             password2: passwd2,
+            img_id:imageCodeId,
         };
         var req_json = JSON.stringify(req_data);
         $.ajax({
